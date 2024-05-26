@@ -7,6 +7,9 @@ import exception.OutOfMoneyException;
 import repository.BeanRepository;
 import repository.EmployeeRepository;
 import Facade.CafeFacade;
+import thread.EmployeeThread;
+import thread.Exchange;
+import thread.GuestThread;
 import utils.Utils;
 
 public class CafeSimulation {
@@ -154,23 +157,35 @@ public class CafeSimulation {
             return;
         }
 
-        Coffee madeCoffee = cafeFacade.makeCoffee(employee, beanName, getCoffeeTypeAction(), getCoffeeSizeAction(), getCoffeeTemperatureAction());
+        Exchange exchange = new Exchange();
 
-        System.out.println("<<system>> 커피를 만들었습니다!\n");
-        System.out.println("<<system>>  - 커피: " + madeCoffee.getCoffeeType().name());
-        System.out.println("<<system>>  - 원두: " + madeCoffee.getBean());
-        System.out.println("<<system>>  - 크기: " + madeCoffee.getCoffeeSize());
-        System.out.println("<<system>>  - 온도: " + madeCoffee.getCoffeeTemperature());
-        System.out.println("<<system>>  - 가격: " + madeCoffee.getPrice());
+        EmployeeThread employeeThread = new EmployeeThread(exchange);
+        GuestThread guestThread = new GuestThread(exchange);
 
-        if (Utils.getProbability(10)) {
-            System.out.println("<<system>> 손님이 커피를 들고 도망갔습니다!");
-        } else {
-            int tip = Utils.getRandomIntBetween(0, 3);
+        employeeThread.start();
+        guestThread.start();
 
-            System.out.println("<<system>> 손님이 " + madeCoffee.getPrice() + "원과 팁 " + tip + "원을 지불했습니다.");
+        employeeThread.setCoffee(cafeFacade.makeCoffee(employee, beanName, getCoffeeTypeAction(), getCoffeeSizeAction(), getCoffeeTemperatureAction()));
 
-            cafeFacade.addMoney(madeCoffee.getPrice() + tip);
+        // INFO: 7주차 과제를 위한 스레드 로직
+        while (true) {
+            if (exchange.getMoney() != -1) {
+                int money = exchange.getMoney();
+
+                cafeFacade.addMoney(money);
+
+                System.out.println("<<system>> " + money + "원을 정산했습니다.");
+                break;
+            } else {
+                System.out.println("<<system>> " + "커피 만들고, 계산 중...");
+            }
+
+            // 지연
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
