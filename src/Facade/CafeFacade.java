@@ -1,5 +1,6 @@
 package Facade;
 
+import config.Config;
 import domain.*;
 import domain.EndingInfo;
 import exception.AlreadyHiredEmployeeException;
@@ -14,9 +15,6 @@ import java.util.List;
 import java.util.Set;
 
 public class CafeFacade {
-
-    private final int MAX_TURN = 5;
-    private final int TARGET_AMOUNT = 100;
 
     private final Set<Integer> workedEmployees = new HashSet<>();
     private final EndingInfo endingInfo = new EndingInfo();
@@ -94,6 +92,10 @@ public class CafeFacade {
         workedEmployees.add(EmployeeId);
 
         beanRepository.saveBean(name, amount, currentTurn);
+    }
+
+    public void noahOrderBean(int amount) {
+        beanRepository.updateNoahBean(amount);
     }
 
     public String useBeanByBeanId(int beanId) throws NotFoundBeanException {
@@ -180,11 +182,11 @@ public class CafeFacade {
     }
 
     public boolean isGameOver() {
-        return currentTurn > MAX_TURN || isSuccess() || money == 0;
+        return currentTurn > Config.MAX_TURN || isSuccess() || money == 0;
     }
 
     public boolean isSuccess() {
-        return money > TARGET_AMOUNT;
+        return money > Config.TARGET_AMOUNT;
     }
 
     public String[] getEndingStringArray() {

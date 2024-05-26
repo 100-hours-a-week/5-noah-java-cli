@@ -13,6 +13,10 @@ public class BeanRepository {
     private int sequence = 1;
     Map<Integer, Bean> storage = new HashMap<>();
 
+    public BeanRepository() {
+        storage.put(0, new Bean(0, "노아 원두", 0, Integer.MAX_VALUE));
+    }
+
     public List<Bean> findAllBean() {
         return new ArrayList<>(storage.values());
     }
@@ -23,6 +27,10 @@ public class BeanRepository {
         storage.put(sequence, newBean);
 
         sequence++;
+    }
+
+    public void updateNoahBean(int amount) {
+        storage.get(0).addAmount(amount);
     }
 
     public String useBeanById(int id) throws NotFoundBeanException {

@@ -26,6 +26,10 @@ public class Bean {
         return amount;
     }
 
+    public void addAmount(int amount) {
+        this.amount += amount;
+    }
+
     public int getExpirationTurn() {
         return expirationTurn;
     }
