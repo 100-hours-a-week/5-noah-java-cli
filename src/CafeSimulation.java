@@ -48,7 +48,7 @@ public class CafeSimulation {
 
     private void hireEmployee() {
         String name = Utils.getRandomString();
-        int wage = Utils.getValueBetween1And5();
+        int wage = Utils.getRandomIntBetween(1, 5);
 
         Utils.printStringArraySlowly(new String[]{"<<system>> 지원서가 들어왔습니다!", " - 이름: " + name + ", 일급: " + wage, "<<system>> 이를 고용할까요?", " 1. 고용", " 0. 거절"}, 300);
 
@@ -158,7 +158,7 @@ public class CafeSimulation {
         if (Utils.getProbability(10)) {
             System.out.println("<<system>> 손님이 커피를 들고 도망갔습니다!");
         } else {
-            int tip = Utils.getValueBetween0And3();
+            int tip = Utils.getRandomIntBetween(0, 3);
 
             System.out.println("<<system>> 손님이 " + madeCoffee.getPrice() + "원과 팁 " + tip + "원을 지불했습니다.");
 
