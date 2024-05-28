@@ -1,12 +1,10 @@
+import Facade.CafeFacade;
 import config.Config;
 import domain.*;
 import exception.AlreadyHiredEmployeeException;
 import exception.NotFoundBeanException;
 import exception.NotFoundEmployeeException;
 import exception.OutOfMoneyException;
-import repository.BeanRepository;
-import repository.EmployeeRepository;
-import Facade.CafeFacade;
 import thread.EmployeeThread;
 import thread.Exchange;
 import thread.GuestThread;
@@ -14,7 +12,11 @@ import utils.Utils;
 
 public class CafeSimulation {
 
-    private final CafeFacade cafeFacade = new CafeFacade(new BeanRepository(), new EmployeeRepository());
+    private final CafeFacade cafeFacade;
+
+    public CafeSimulation(CafeFacade cafeFacade) {
+        this.cafeFacade = cafeFacade;
+    }
 
     public void run() {
         startRandomEvent();

@@ -1,3 +1,7 @@
+import Facade.CafeFacade;
+import Facade.CafeFacadeImpl;
+import repository.BeanRepository;
+import repository.EmployeeRepository;
 import utils.Utils;
 
 public class Main {
@@ -42,7 +46,13 @@ public class Main {
 
         Utils.printStringArraySlowly(description, 100);
 
-        CafeSimulation cf = new CafeSimulation();
+        BeanRepository beanRepository = new BeanRepository();
+        EmployeeRepository employeeRepository = new EmployeeRepository();
+
+        CafeFacade cafeFacade = new CafeFacadeImpl(beanRepository, employeeRepository);
+
+        CafeSimulation cf = new CafeSimulation(cafeFacade);
+
         cf.run();
     }
 }
