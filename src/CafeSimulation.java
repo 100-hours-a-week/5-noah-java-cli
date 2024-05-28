@@ -1,18 +1,26 @@
+import Facade.CafeFacade;
+import config.Config;
 import domain.*;
 import exception.AlreadyHiredEmployeeException;
 import exception.NotFoundBeanException;
 import exception.NotFoundEmployeeException;
 import exception.OutOfMoneyException;
-import repository.BeanRepository;
-import repository.EmployeeRepository;
-import Facade.CafeFacade;
+import thread.EmployeeThread;
+import thread.Exchange;
+import thread.GuestThread;
 import utils.Utils;
 
 public class CafeSimulation {
 
-    private final CafeFacade cafeFacade = new CafeFacade(new BeanRepository(), new EmployeeRepository());
+    private final CafeFacade cafeFacade;
+
+    public CafeSimulation(CafeFacade cafeFacade) {
+        this.cafeFacade = cafeFacade;
+    }
 
     public void run() {
+        startRandomEvent();
+
         while (!cafeFacade.isGameOver()) {
             System.out.println("\n=============== " + cafeFacade.getCurrentTurn() + " DAY " + "===============");
             System.out.println(" - 목표 금액: 100원");
@@ -21,14 +29,10 @@ public class CafeSimulation {
             for (Employee employee : cafeFacade.getEmployee()) {
                 System.out.println(" - id: " + employee.getId() + ", 이름: " + employee.getName() + ", 일급: " + employee.getWage() + ", 행동: " + (cafeFacade.isWorkedEmployee(employee.getId()) ? 'Y' : 'N'));
             }
-            System.out.println("=============== " + "BEEN LIST " + "===============");
-            for (Bean bean : cafeFacade.getBean()) {
-                System.out.println(" - id: " + bean.getId() + ", 이름: " + bean.getName() + ", 수량: " + bean.getAmount() + ", 소비기한: " + bean.getExpirationTurn());
-            }
 
-            Utils.printStringArraySlowly(new String[]{"<<system>> 어떤 행동을 하시겠습니까?", " 1. 직원 고용, 하루 한번만 가능", " 2. 직원 해고", " 3. 원두 발주", " 4. 커피 만들기, 판매", " 0. 마감"}, 300);
+            Utils.printStringArraySlowly(new String[]{"<<system>> 어떤 행동을 하시겠습니까?", " 1. 직원 고용, 하루 한번만 가능", " 2. 직원 해고", " 3. 원두 발주", " 4. 원두 확인", " 5. 커피 만들기, 판매", " 0. 마감"}, 300);
 
-            int action = Utils.getAction(0, 1, 2, 3, 4);
+            int action = Utils.getAction(0, 1, 2, 3, 4, 5);
 
             if (action == 0) {
                 Utils.printStringArraySlowly(cafeFacade.nextDayAndGetStringArray(), 100);
@@ -39,6 +43,8 @@ public class CafeSimulation {
             } else if (action == 3) {
                 orderBeen();
             } else if (action == 4) {
+                findAllBean();
+            } else if (action == 5) {
                 makeCoffeeAndSellCoffee();
             }
         }
@@ -48,7 +54,7 @@ public class CafeSimulation {
 
     private void hireEmployee() {
         String name = Utils.getRandomString();
-        int wage = Utils.getValueBetween1And5();
+        int wage = Utils.getRandomIntBetween(1, 5);
 
         Utils.printStringArraySlowly(new String[]{"<<system>> 지원서가 들어왔습니다!", " - 이름: " + name + ", 일급: " + wage, "<<system>> 이를 고용할까요?", " 1. 고용", " 0. 거절"}, 300);
 
@@ -118,6 +124,13 @@ public class CafeSimulation {
         }
     }
 
+    private void findAllBean() {
+        System.out.println("=============== " + "BEEN LIST " + "===============");
+        for (Bean bean : cafeFacade.getBean()) {
+            System.out.println(" - id: " + bean.getId() + ", 이름: " + bean.getName() + ", 수량: " + bean.getAmount() + ", 소비기한: " + bean.getExpirationTurn());
+        }
+    }
+
     private void makeCoffeeAndSellCoffee() {
         System.out.println("<<system>> 커피를 만들 직원을 id로 선택하세요.");
 
@@ -146,23 +159,35 @@ public class CafeSimulation {
             return;
         }
 
-        Coffee madeCoffee = cafeFacade.makeCoffee(employee, beanName, getCoffeeTypeAction(), getCoffeeSizeAction(), getCoffeeTemperatureAction());
+        Exchange exchange = new Exchange();
 
-        System.out.println("<<system>> 커피를 만들었습니다!\n");
-        System.out.println("<<system>>  - 커피: " + madeCoffee.getCoffeeType().name());
-        System.out.println("<<system>>  - 원두: " + madeCoffee.getBean());
-        System.out.println("<<system>>  - 크기: " + madeCoffee.getCoffeeSize());
-        System.out.println("<<system>>  - 온도: " + madeCoffee.getCoffeeTemperature());
-        System.out.println("<<system>>  - 가격: " + madeCoffee.getPrice());
+        EmployeeThread employeeThread = new EmployeeThread(exchange);
+        GuestThread guestThread = new GuestThread(exchange);
 
-        if (Utils.getProbability(10)) {
-            System.out.println("<<system>> 손님이 커피를 들고 도망갔습니다!");
-        } else {
-            int tip = Utils.getValueBetween0And3();
+        employeeThread.start();
+        guestThread.start();
 
-            System.out.println("<<system>> 손님이 " + madeCoffee.getPrice() + "원과 팁 " + tip + "원을 지불했습니다.");
+        employeeThread.setCoffee(cafeFacade.makeCoffee(employee, beanName, getCoffeeTypeAction(), getCoffeeSizeAction(), getCoffeeTemperatureAction()));
 
-            cafeFacade.addMoney(madeCoffee.getPrice() + tip);
+        // INFO: 7주차 과제를 위한 스레드 로직
+        while (true) {
+            if (exchange.getMoney() != -1) {
+                int money = exchange.getMoney();
+
+                cafeFacade.addMoney(money);
+
+                System.out.println("<<system>> " + money + "원을 정산했습니다.");
+                break;
+            } else {
+                System.out.println("<<system>> " + "커피 만들고, 계산 중...");
+            }
+
+            // 지연
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -189,5 +214,27 @@ public class CafeSimulation {
         System.out.println("<<system>> 2. 차갑게");
 
         return Utils.getAction(1, 2);
+    }
+
+    private void startRandomEvent() {
+        Thread thread = new Thread(() -> {
+            try {
+                int i = Config.MAX_EVENT;
+
+                while (i-- > 0) {
+                    Thread.sleep(Config.MAX_EVENT_TIME * 1000L);
+                    if (Utils.getProbability(20)) {
+                        int beanAmount = Utils.getRandomIntBetween(1, 3);
+
+                        cafeFacade.noahOrderBean(beanAmount);
+
+                        System.out.println("<<system>> noah가 원두를 " + beanAmount + "개" + " 채웠습니다!");
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        thread.start();
     }
 }

@@ -1,13 +1,13 @@
 package utils;
 
-import java.util.Random;
 import java.util.Scanner;
+import java.util.random.RandomGenerator;
 
 public class Utils {
 
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
     private static final Scanner scanner = new Scanner(System.in);
-    private static final Random random = new Random();
+    private static final RandomGenerator RANDOM_GENERATOR = RandomGenerator.getDefault();
 
     public static int getInt() {
         int i = Integer.MIN_VALUE;
@@ -60,6 +60,8 @@ public class Utils {
         return action;
     }
 
+    // TODO: getActionRange
+
     public static void printStringArraySlowly(String[] lines, int delay) {
         for (String line : lines) {
             System.out.println(line);
@@ -71,21 +73,17 @@ public class Utils {
         }
     }
 
-    public static int getValueBetween0And3() {
-        return random.nextInt(4);
-    }
-
-    public static int getValueBetween1And5() {
-        return random.nextInt(5) + 1;
+    public static int getRandomIntBetween(int min, int max) {
+        return RANDOM_GENERATOR.nextInt(max - min + 1) + min;
     }
 
     public static String getRandomString() {
-        int length = random.nextInt(5) + 3;
+        int length = RANDOM_GENERATOR.nextInt(5) + 3;
 
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < length; i++) {
-            sb.append(ALPHABET.charAt(random.nextInt(ALPHABET.length())));
+            sb.append(ALPHABET.charAt(RANDOM_GENERATOR.nextInt(ALPHABET.length())));
         }
 
         return sb.toString();
@@ -93,6 +91,6 @@ public class Utils {
 
     // i% 확률로 true
     public static boolean getProbability(int i) {
-        return random.nextInt(100) < i;
+        return RANDOM_GENERATOR.nextInt(100) < i;
     }
 }
